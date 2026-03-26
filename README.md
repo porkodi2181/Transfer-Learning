@@ -27,24 +27,18 @@ Make Predictions on New Data.
 ```python
 # Load Pretrained Model and Modify for Transfer Learning
 
-model = models.vgg19(weights = models.VGG19_Weights.DEFAULT)
-
-for param in model.parameters():
-  param.requires_grad = False
-
+from torchvision.models import VGG19_Weights
+model=models.vgg19(weights=VGG19_Weights.DEFAULT)
 
 # Modify the final fully connected layer to match the dataset classes
 
-num_features = model.classifier[-1].in_features
-model.classifier[-1] = nn.Linear(num_features,1)
-
+num_classes = len(train_dataset.classes)
+model.classifier[6] = nn.Linear(4096, num_classes)
 
 # Include the Loss function and optimizer
 
-criterion = nn.BCELoss()
-optimizer = optim.Adam(model.parameters(),lr=0.001)
-
-
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.Adam(model.classifier[-1].parameters(), lr=0.001)
 
 # Train the model
 
@@ -58,23 +52,19 @@ def train_model(model, train_loader,test_loader,num_epochs=10):
             images, labels = images.to(device), labels.to(device)
             optimizer.zero_grad()
             outputs = model(images)
-            outputs = torch.sigmoid(outputs)
-            labels = labels.float().unsqueeze(1)
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
             running_loss += loss.item()
         train_losses.append(running_loss / len(train_loader))
 
-    # Compute validation loss
+        # Compute validation loss
         model.eval()
         val_loss = 0.0
         with torch.no_grad():
             for images, labels in test_loader:
                 images, labels = images.to(device), labels.to(device)
                 outputs = model(images)
-                outputs = torch.sigmoid(outputs)
-                labels = labels.float().unsqueeze(1)
                 loss = criterion(outputs, labels)
                 val_loss += loss.item()
 
@@ -82,7 +72,6 @@ def train_model(model, train_loader,test_loader,num_epochs=10):
         model.train()
 
         print(f'Epoch [{epoch+1}/{num_epochs}], Train Loss: {train_losses[-1]:.4f}, Validation Loss: {val_losses[-1]:.4f}')
-
     # Plot training and validation loss
     print("Name: PORKODI B")
     print("Register Number: 212224240114")
@@ -94,27 +83,31 @@ def train_model(model, train_loader,test_loader,num_epochs=10):
     plt.title('Training and Validation Loss')
     plt.legend()
     plt.show()
-
 ```
 
 ## OUTPUT
 ### Training Loss, Validation Loss Vs Iteration Plot
 
-<img width="741" height="750" alt="image" src="https://github.com/user-attachments/assets/f8ad8fa2-247d-40f3-bcce-1767577a71f6" />
+<img width="759" height="749" alt="image" src="https://github.com/user-attachments/assets/4e4580e3-1665-46b9-988d-7e3fd84ce0e3" />
+
 
 
 ### Confusion Matrix
+<img width="693" height="619" alt="image" src="https://github.com/user-attachments/assets/1b4118bb-65e9-43ab-bf1a-6329ee5cba11" />
 
-<img width="708" height="732" alt="image" src="https://github.com/user-attachments/assets/f4b8761c-3827-473d-80e8-95bfe5171583" />
+<img width="506" height="224" alt="image" src="https://github.com/user-attachments/assets/b98725bc-e187-49f5-ac0a-3589eda78c47" />
+
+
+
 
 ### Classification Report
 
-<img width="512" height="264" alt="image" src="https://github.com/user-attachments/assets/dbd68ca2-fbab-4cc6-9e5b-48a3f59b440c" />
+<img width="445" height="399" alt="image" src="https://github.com/user-attachments/assets/11456037-57f9-460b-821e-469875e5ed31" />
+
 
 ### New Sample Prediction
-<img width="481" height="428" alt="image" src="https://github.com/user-attachments/assets/98327ba1-e70f-4a50-9580-6b2234d71564" />
+<img width="428" height="402" alt="image" src="https://github.com/user-attachments/assets/7950a35f-9940-43f8-a3ab-12b114d46703" />
 
-<img width="528" height="449" alt="image" src="https://github.com/user-attachments/assets/7e511cc9-9f09-4db3-bdd3-680f72016efe" />
 
 ## RESULT
 The VGG-19 model was successfully trained and optimized to classify defected and non-defected capacitors.
